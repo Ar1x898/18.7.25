@@ -83,8 +83,8 @@
 <!-- ===== STAGE 1: PRELIM GATE (full screen) ===== -->
 <div id="preGate" class="gate" aria-labelledby="preGateTitle">
   <div class="panel" id="preGatePanel">
-    <h1 id="preGateTitle">Preliminary Access</h1>
-    <p class="sub">Enter the preliminary code to view the page.</p>
+    <h1 id="preGateTitle">Security Check</h1>
+    <p class="sub">If this is for you then you should know the code! (Your name in CAPS)</p>
     <form id="preForm" autocomplete="off">
       <div class="field">
         <input id="prePass" type="password" inputmode="text" placeholder="Preliminary code" aria-label="Preliminary code" required />
@@ -113,8 +113,8 @@
     <!-- ===== STAGE 2: GALLERY VEIL ===== -->
     <div id="galleryVeil" class="gallery-veil" aria-labelledby="galleryTitle">
       <div class="mini-panel" id="galleryPanel">
-        <h2 id="galleryTitle">Unlock Gallery</h2>
-        <p class="sub">Enter the gallery code to reveal the pictures.</p>
+        <h2 id="galleryTitle">Unlock Memory Gallery</h2>
+        <p class="sub">Enter the guy's name in CAPS to reveal the pictures!</p>
         <form id="galleryForm" autocomplete="off">
           <div class="field">
             <input id="galleryPass" type="password" inputmode="text" placeholder="Gallery code" aria-label="Gallery code" required />
@@ -135,12 +135,12 @@
 
     prelim: {
       password: "FRANCESCA",     // <— set preliminary plaintext password here
-      rememberHours: 12,
+      rememberHours: 4,
       caseSensitive: false
     },
     gallery: {
       password: "STEVEN",     // <— set gallery plaintext password here
-      rememberHours: 24,
+      rememberHours: 8,
       caseSensitive: false
     },
 

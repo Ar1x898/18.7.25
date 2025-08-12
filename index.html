@@ -121,15 +121,28 @@
     .note small{ color: var(--muted); display:block; margin-top:8px; }
 
     /* ==== ACCESS GATE ==== */
-    .gate{
-      position: fixed; inset:0; z-index: 9999;
-      display: grid; place-items: center;
-      background:
-        radial-gradient(700px 400px at 0% -10%, rgba(94,234,212,.12), transparent 60%),
-        radial-gradient(700px 400px at 100% 110%, rgba(96,165,250,.10), transparent 60%),
-        linear-gradient(180deg, #05080d, #0b0f14 60%);
-      padding: 20px;
-    }
+    .gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: black url('assets/binary.jpg') center/cover no-repeat;
+  font-family: 'Courier New', Courier, monospace;
+  color: #00ffcc;
+  text-shadow: 0 0 5px #00ffcc;
+  padding: 20px;
+}
+
+.panel {
+  width: min(560px, 92vw);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #00ffcc;
+  border-radius: 12px;
+  box-shadow: 0 0 20px #00ffccaa;
+  padding: 24px;
+}
+
     .panel{
       width: min(560px, 92vw);
       border: 1px solid var(--edge);
@@ -176,6 +189,72 @@
       border: 1px solid #b91c1c; border-radius: 12px; background:#7f1d1d; color: #fee2e2;
       font-weight: 600;
     }
+    body {
+  background: url('assets/1month.jpg') center/cover no-repeat;
+  color: #5c3d4c;
+  font-family: 'Georgia', serif;
+}
+
+.card {
+  background: linear-gradient(180deg, #fff0f5, #ffe4e1);
+  border-color: #fbb6ce;
+  box-shadow: 0 8px 20px rgba(255, 192, 203, 0.4);
+}
+
+.card:hover {
+  transform: scale(1.02);
+  border-color: #f472b6;
+  box-shadow: 0 12px 28px rgba(255, 182, 193, 0.6);
+}
+
+.card .controls {
+  background: #fff0f5;
+  border-top: 1px solid #fbcfe8;
+}
+
+.note-toggle {
+  background: #f9a8d4;
+  border-color: #f472b6;
+  color: white;
+}
+
+.note-toggle:hover {
+  background: #f472b6;
+}
+
+.note {
+  background: rgba(255, 240, 245, 0.95);
+  border: 1px solid #f9a8d4;
+  color: #5c3d4c;
+}
+
+.note p {
+  color: #4b2e39;
+}
+
+.note small {
+  color: #7c4d60;
+}
+
+.label {
+  color: #933b4b;
+}
+
+header {
+  background: linear-gradient(to right, #fbcfe8, #f9a8d4);
+  border-bottom: 1px solid #f472b6;
+}
+
+.btn {
+  background: #f472b6;
+  color: white;
+  border: none;
+}
+
+.btn:hover {
+  background: #ec4899;
+}
+
   </style>
 </head>
 <body>
@@ -187,8 +266,8 @@
 <!-- ===== ACCESS GATE ===== -->
 <div id="gate" class="gate" aria-labelledby="gateTitle">
   <div class="panel" id="gatePanel">
-    <h1 id="gateTitle">Enter access code</h1>
-    <p class="sub">This is a soft lock for preliminary privacy. Don’t reuse sensitive passwords.</p>
+    <h1 id="gateTitle">Enter the access code</h1>
+    <p class="sub">Only the person given this link personally should be able to open this! Or else keep out!!!</p>
     <form id="gateForm" autocomplete="off">
       <div class="field">
         <input id="pass" type="password" inputmode="text" placeholder="Access code" aria-label="Access code" required />
@@ -197,8 +276,6 @@
       <div id="gateMsg" class="msg" role="alert" aria-live="polite"></div>
       <div class="hint">Tip: You can change the allowed access codes inside the <strong>CONFIG</strong> block in this file.</div>
     </form>
-    <div class="footer-note">
-      For real security, host behind proper authentication (e.g., Cloudflare Access or a backend).
     </div>
   </div>
 </div>

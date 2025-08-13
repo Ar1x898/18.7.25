@@ -15,7 +15,7 @@
     *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
-      background:url('https://github.com/Ar1x898/18.7.25/raw/main/1month.jpg') center/cover no-repeat;
+      background: var(--bg) center/cover no-repeat fixed;
       color:#5c3d4c; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
     .hidden{display:none!important}
@@ -29,7 +29,7 @@
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(8,1fr)}}
     @media (max-width:740px){.grid{grid-template-columns:repeat(4,1fr)}}
-    .card{grid-column:span 4;background:linear-gradient(180deg,#fff0f5,#ffe4e1);border:1px solid #fbb6ce;border-radius:var(--radius);overflow:clip;box-shadow:0 8px 20px rgba(255,192,203,.4);position:relative;transition:transform .2s,border-color .2s,box-shadow .2s;isolation:isolate}
+    .card{grid-column:span 4;background:linear-gradient(180deg,#fff0f5,#ffe4e1);border:1px solid #fbb6ce;border-radius:var(--radius);overflow:hidden;box-shadow:0 8px 20px rgba(255,192,203,.4);position:relative;transition:transform .2s,border-color .2s,box-shadow .2s;isolation:isolate}
     .card:hover{transform:scale(1.02);border-color:var(--pink3);box-shadow:0 12px 28px rgba(255,182,193,.6)}
     .card img{width:100%;height:220px;display:block;object-fit:cover;background:#0a0f16;user-select:none;-webkit-user-drag:none}
     .card .controls{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#fff0f5;border-top:1px solid #fbcfe8}
@@ -42,7 +42,7 @@
     .note small{color:#7c4d60;display:block;margin-top:8px}
 
     /* Full-screen gate (preliminary) */
-    .gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:url('https://github.com/Ar1x898/18.7.25/raw/main/binary.jpg') center/cover no-repeat;font-family:'Courier New',Courier,monospace;color:#00ffcc;text-shadow:0 0 5px #00ffcc;padding:20px}
+    .gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#000 url('binary.jpg') center/cover no-repeat;font-family:'Courier New',Courier,monospace;color:#00ffcc;text-shadow:0 0 5px #00ffcc;padding:20px}
     .panel{width:min(560px,92vw);background:rgba(0,0,0,.82);border:1px solid #00ffcc;border-radius:12px;box-shadow:0 0 20px #00ffccaa;padding:24px}
     .panel h1{margin:0 0 4px;font-size:20px;letter-spacing:.2px;color:#eafffb}
     .panel p.sub{margin:0 0 14px;color:#8bf0e0;font-size:14px}
@@ -85,7 +85,7 @@
   <div class="panel" id="preGatePanel">
     <h1 id="preGateTitle">Security Check</h1>
     <p class="sub">If this is for you then you should know the code! What's your name?</p>
-    <form id="preForm" autocomplete="off">
+    <form id="preForm" autocomplete="off" novalidate>
       <div class="field">
         <input id="prePass" type="password" inputmode="text" placeholder="Preliminary code" aria-label="Preliminary code" required />
         <button class="unlock" type="submit" id="preBtn">Enter</button>
@@ -115,7 +115,7 @@
       <div class="mini-panel" id="galleryPanel">
         <h2 id="galleryTitle">Unlock Memory Gallery</h2>
         <p class="sub">What's my name? Enter for the memories!</p>
-        <form id="galleryForm" autocomplete="off">
+        <form id="galleryForm" autocomplete="off" novalidate>
           <div class="field">
             <input id="galleryPass" type="password" inputmode="text" placeholder="Gallery code" aria-label="Gallery code" required />
             <button class="unlock" type="submit" id="galleryBtn">Unlock</button>
@@ -128,251 +128,284 @@
 </main>
 
 <script>
-  // ================= CONFIG =================
-  const CONFIG = {
-    siteTitle: "1 Month Anniversary",
-    clickAnywhereToToggle: true,
+/* ================= CONFIG =================
+   Put your images in the same folder (or adjust paths).
+   Example below adds "test.jpg" to the gallery. */
+const CONFIG = {
+  siteTitle: "1 Month Anniversary",
+  clickAnywhereToToggle: true,
 
-    prelim: {
-      password: "FRANCESCA",     // <— set preliminary plaintext password here
-      rememberHours: 4,
-      caseSensitive: false
-    },
-    gallery: {
-      password: "STEVEN",     // <— set gallery plaintext password here
-      rememberHours: 8,
-      caseSensitive: false
-    },
+  /* Optional: set a local background image (instead of a remote URL) */
+  backgroundImage: "1month.jpg", // put a local file here or set to "" to use solid color
 
-    images: [
-      // Replace these with real paths. Missing images will auto-fallback to a placeholder.
-      { src: "curlhair.jpg", alt: "Memory 1", label: "Photo #1", note: "One of the earlier pics you sent me, should know i adore curly hair. ;)" },
-      { src: "theft.jpg", alt: "Sample image 2", label: "Photo #2", note: "Another note for your image." },
-      { src: "assets/photo3.jpg", alt: "Sample image 3", label: "Photo #3", note: "Click again to hide this note." }
-    ]
-  };
+  /* DEV bypass: append ?dev=1 to the URL to preview unlocked UI without codes */
+  devBypassParam: "dev",
+
+  prelim: {
+    password: "FRANCESCA",     // preliminary plaintext password
+    rememberHours: 4,
+    caseSensitive: false
+  },
+  gallery: {
+    password: "STEVEN",        // gallery plaintext password
+    rememberHours: 8,
+    caseSensitive: false
+  },
+
+  images: [
+    // === Add images here ===
+    { src: "test.jpg", alt: "Test image",          label: "Test.jpg", note: "Your sample image appears here." },
+    { src: "curlhair.jpg", alt: "Curly hair",       label: "Photo #1", note: "One of the earlier pics you sent me — adore the curls. :)" },
+    { src: "theft.jpg",    alt: "Sample image 2",   label: "Photo #2", note: "Another note for your image." },
+    { src: "assets/photo3.jpg", alt: "Sample 3",    label: "Photo #3", note: "Click the image or button to toggle this note." }
+  ]
+};
 </script>
 
 <script>
-  // =============== Utilities & Storage ===============
-  const STORE_PRE  = "auth.prelim.v1";
-  const STORE_GAL  = "auth.gallery.v1";
+/* =============== Utilities & Storage =============== */
+const STORE_PRE  = "auth.prelim.v1";
+const STORE_GAL  = "auth.gallery.v1";
 
-  function now(){ return Date.now(); }
-  function remember(key, hours){
-    try{
-      const ttl = Math.max(1, Number(hours)||1);
-      localStorage.setItem(key, JSON.stringify({ exp: now() + ttl*3600*1000 }));
-    }catch(_){}
+const qs = new URLSearchParams(location.search);
+const DEV_BYPASS = CONFIG.devBypassParam && qs.has(CONFIG.devBypassParam);
+
+function now(){ return Date.now(); }
+function remember(key, hours){
+  try{
+    const ttl = Math.max(1, Number(hours)||1);
+    localStorage.setItem(key, JSON.stringify({ exp: now() + ttl*3600*1000 }));
+  }catch(_){}
+}
+function hasRemember(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return false;
+    const rec = JSON.parse(raw);
+    if(!rec || typeof rec.exp!=='number') return false;
+    if(now()>rec.exp){ localStorage.removeItem(key); return false; }
+    return true;
+  }catch(_){ return false; }
+}
+function clearRemember(key){ try{ localStorage.removeItem(key); }catch(_){ } }
+
+/* =============== DOM refs =============== */
+const preGate     = document.getElementById('preGate');
+const prePanel    = document.getElementById('preGatePanel');
+const preForm     = document.getElementById('preForm');
+const prePass     = document.getElementById('prePass');
+const preBtn      = document.getElementById('preBtn');
+const preMsg      = document.getElementById('preMsg');
+
+const appHeader   = document.getElementById('appHeader');
+const app         = document.getElementById('app');
+const siteTitleEl = document.getElementById('siteTitle');
+
+const gallery     = document.getElementById('gallery');
+const galleryVeil = document.getElementById('galleryVeil');
+const galleryPanel= document.getElementById('galleryPanel');
+const galleryForm = document.getElementById('galleryForm');
+const galleryPass = document.getElementById('galleryPass');
+const galleryBtn  = document.getElementById('galleryBtn');
+const galleryMsg  = document.getElementById('galleryMsg');
+
+const lockGalleryBtn = document.getElementById('lockGalleryBtn');
+const lockAllBtn     = document.getElementById('lockAllBtn');
+
+/* =============== Helpers =============== */
+function normalize(input, caseSensitive){
+  return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
+}
+function matches(input, target, caseSensitive){
+  return normalize(input, caseSensitive) === normalize(target, caseSensitive);
+}
+
+function setSiteTitle(){
+  document.title = CONFIG.siteTitle || "Locked Gallery";
+  if(siteTitleEl) siteTitleEl.textContent = CONFIG.siteTitle || "Locked Gallery";
+}
+
+/* Optional local background image */
+(function setBackground(){
+  if (CONFIG.backgroundImage){
+    document.body.style.backgroundImage = `url('${CONFIG.backgroundImage}')`;
   }
-  function hasRemember(key){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return false;
-      const rec = JSON.parse(raw);
-      if(!rec || typeof rec.exp!=='number') return false;
-      if(now()>rec.exp){ localStorage.removeItem(key); return false; }
-      return true;
-    }catch(_){ return false; }
+})();
+
+function showAppShell(){
+  preGate.style.display = 'none';
+  appHeader.classList.remove('hidden');
+  app.classList.remove('hidden');
+}
+function showPreGate(){
+  preGate.style.display = 'grid';
+  appHeader.classList.add('hidden');
+  app.classList.add('hidden');
+  prePass.value = ''; preMsg.textContent = '';
+  setTimeout(()=>prePass?.focus(), 0);
+}
+
+function unlockGalleryUI(){
+  gallery.classList.remove('gallery-blurred');
+  galleryVeil.classList.add('hidden');
+}
+function lockGalleryUI(){
+  gallery.classList.add('gallery-blurred');
+  galleryVeil.classList.remove('hidden');
+  galleryPass.value = ''; galleryMsg.textContent = '';
+  setTimeout(()=>galleryPass?.focus(), 0);
+}
+
+/* =============== Gallery builder =============== */
+const PLACEHOLDER_SVG =
+  'data:image/svg+xml;utf8,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#0b1020"/>
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#g)"/>
+      <g fill="#93c5fd" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" text-anchor="middle">
+        <text x="50%" y="48%" font-size="36">Add your image at</text>
+        <text x="50%" y="56%" font-size="28">CONFIG.images</text>
+      </g>
+    </svg>
+  `);
+
+function el(tag, attrs={}, ...children){
+  const node = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)){
+    if (v == null) continue;
+    if (k === 'class') node.className = v;
+    else if (k === 'style') Object.assign(node.style, v);
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else if (k === 'html') node.innerHTML = v;
+    else node.setAttribute(k, v);
   }
-  function clearRemember(key){ try{ localStorage.removeItem(key); }catch(_){ } }
-
-  // =============== DOM refs ===============
-  const preGate     = document.getElementById('preGate');
-  const prePanel    = document.getElementById('preGatePanel');
-  const preForm     = document.getElementById('preForm');
-  const prePass     = document.getElementById('prePass');
-  const preBtn      = document.getElementById('preBtn');
-  const preMsg      = document.getElementById('preMsg');
-
-  const appHeader   = document.getElementById('appHeader');
-  const app         = document.getElementById('app');
-  const siteTitleEl = document.getElementById('siteTitle');
-
-  const gallery     = document.getElementById('gallery');
-  const galleryVeil = document.getElementById('galleryVeil');
-  const galleryPanel= document.getElementById('galleryPanel');
-  const galleryForm = document.getElementById('galleryForm');
-  const galleryPass = document.getElementById('galleryPass');
-  const galleryBtn  = document.getElementById('galleryBtn');
-  const galleryMsg  = document.getElementById('galleryMsg');
-
-  const lockGalleryBtn = document.getElementById('lockGalleryBtn');
-  const lockAllBtn     = document.getElementById('lockAllBtn');
-
-  // =============== Helpers ===============
-  function normalize(input, caseSensitive){
-    return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
+  for (const c of children){
+    if (c == null) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
   }
-  function matches(input, target, caseSensitive){
-    return normalize(input, caseSensitive) === normalize(target, caseSensitive);
-  }
+  return node;
+}
 
-  function setSiteTitle(){
-    document.title = CONFIG.siteTitle || "Locked Gallery";
-    if(siteTitleEl) siteTitleEl.textContent = CONFIG.siteTitle || "Locked Gallery";
-  }
+function buildGallery(items){
+  gallery.innerHTML = '';
+  const data = Array.isArray(items) && items.length ? items : [{
+    src: PLACEHOLDER_SVG, alt: "Placeholder image", label: "Sample", note: "Edit CONFIG.images in the HTML to add your own images and notes."
+  }];
 
-  function showAppShell(){
-    preGate.style.display = 'none';
-    appHeader.classList.remove('hidden');
-    app.classList.remove('hidden');
-  }
-  function showPreGate(){
-    preGate.style.display = 'grid';
-    appHeader.classList.add('hidden');
-    app.classList.add('hidden');
-    prePass.value = ''; preMsg.textContent = '';
-    setTimeout(()=>prePass.focus(), 0);
-  }
+  data.forEach((it, i) => {
+    const noteId = `note-${i}`;
 
-  function unlockGalleryUI(){
-    gallery.classList.remove('gallery-blurred');
-    galleryVeil.classList.add('hidden');
-  }
-  function lockGalleryUI(){
-    gallery.classList.add('gallery-blurred');
-    galleryVeil.classList.remove('hidden');
-    galleryPass.value = ''; galleryMsg.textContent = '';
-    setTimeout(()=>galleryPass.focus(), 0);
-  }
-
-  // =============== Gallery builder ===============
-  const PLACEHOLDER_SVG =
-    'data:image/svg+xml;utf8,' + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#0b1020"/>
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#g)"/>
-        <g fill="#93c5fd" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" text-anchor="middle">
-          <text x="50%" y="48%" font-size="36">Add your image at</text>
-          <text x="50%" y="56%" font-size="28">CONFIG.images</text>
-        </g>
-      </svg>
-    `);
-
-  function el(tag, attrs={}, ...children){
-    const node = document.createElement(tag);
-    for (const [k,v] of Object.entries(attrs)){
-      if (v == null) continue;
-      if (k === 'class') node.className = v;
-      else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
-      else if (k === 'html') node.innerHTML = v;
-      else node.setAttribute(k, v);
-    }
-    for (const c of children){
-      if (c == null) continue;
-      node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
-    }
-    return node;
-  }
-
-  function buildGallery(items){
-    gallery.innerHTML = '';
-    const data = Array.isArray(items) && items.length ? items : [{
-      src: PLACEHOLDER_SVG, alt: "Placeholder image", label: "Sample", note: "Edit CONFIG.images in the HTML to add your own images and notes."
-    }];
-
-    data.forEach((it, i) => {
-      const noteId = `note-${i}`;
-      const img = el('img', { alt: it.alt || "" });
-
-      // Load with graceful fallback to avoid image 404s
-      img.src = it.src || PLACEHOLDER_SVG;
-      img.addEventListener('error', () => { img.src = PLACEHOLDER_SVG; });
-
-      const btn = el('button', { class: 'note-toggle', 'aria-controls': noteId, 'aria-expanded': 'false', type: 'button' }, 'Show note');
-      const label = el('div', { class: 'label', title: it.label || '' }, it.label || '');
-      const controls = el('div', { class: 'controls' }, label, btn);
-      const note = el('figcaption', { class: 'note', id: noteId, hidden: true }, el('p', {}, it.note || ''));
-
-      const card = el('figure', { class: 'card', role: 'listitem' }, img, controls, note);
-
-      function toggleNote(){
-        const willShow = note.hidden;
-        note.hidden = !willShow;
-        btn.setAttribute('aria-expanded', String(willShow));
-        btn.textContent = willShow ? 'Hide note' : 'Show note';
-      }
-      btn.addEventListener('click', toggleNote);
-
-      if (CONFIG.clickAnywhereToToggle) {
-        img.style.cursor = 'pointer';
-        card.addEventListener('click', (ev) => {
-          if (ev.target === btn) return;
-          toggleNote();
-        });
-      }
-
-      gallery.appendChild(card);
+    const img = el('img', {
+      alt: it.alt || "",
+      loading: 'lazy',
+      decoding: 'async'
     });
+
+    // Load with graceful fallback to avoid 404s
+    img.src = it.src || PLACEHOLDER_SVG;
+    img.addEventListener('error', () => { img.src = PLACEHOLDER_SVG; });
+
+    const btn = el('button', { class: 'note-toggle', 'aria-controls': noteId, 'aria-expanded': 'false', type: 'button' }, 'Show note');
+    const label = el('div', { class: 'label', title: it.label || '' }, it.label || '');
+    const controls = el('div', { class: 'controls' }, label, btn);
+    const note = el('figcaption', { class: 'note', id: noteId, hidden: true }, el('p', {}, it.note || ''));
+
+    const card = el('figure', { class: 'card', role: 'listitem' }, img, controls, note);
+
+    function toggleNote(){
+      const willShow = note.hidden;
+      note.hidden = !willShow;
+      btn.setAttribute('aria-expanded', String(willShow));
+      btn.textContent = willShow ? 'Hide note' : 'Show note';
+    }
+    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); toggleNote(); });
+
+    if (CONFIG.clickAnywhereToToggle) {
+      img.style.cursor = 'pointer';
+      card.addEventListener('click', (ev) => {
+        if (ev.target === btn) return;
+        toggleNote();
+      });
+    }
+
+    gallery.appendChild(card);
+  });
+}
+
+/* =============== Init & Event handlers =============== */
+(function init(){
+  setSiteTitle();
+  buildGallery(CONFIG.images);
+
+  // Dev preview (skip both locks)
+  if (DEV_BYPASS){
+    showAppShell();
+    unlockGalleryUI();
+    return;
   }
 
-  // =============== Init & Event handlers ===============
-  (function init(){
-    setSiteTitle();
-    buildGallery(CONFIG.images);
-
-    // Stage 1
-    if (hasRemember(STORE_PRE)) {
-      showAppShell();
-    } else {
-      showPreGate();
-    }
-
-    // Stage 2 (only auto-unlock after app shell visible)
-    if (hasRemember(STORE_GAL)) {
-      unlockGalleryUI();
-    } else {
-      lockGalleryUI();
-    }
-  })();
-
-  preForm.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const input = prePass.value.trim();
-    if (!input) return;
-    preBtn.disabled = true; preMsg.textContent = 'Checking…';
-    const ok = matches(input, CONFIG.prelim.password, CONFIG.prelim.caseSensitive);
-    if (ok){
-      remember(STORE_PRE, CONFIG.prelim.rememberHours);
-      showAppShell();
-    } else {
-      preMsg.textContent = 'Incorrect preliminary code.';
-      prePanel.classList.remove('shake'); void prePanel.offsetWidth; prePanel.classList.add('shake');
-    }
-    preBtn.disabled = false;
-  });
-
-  galleryForm.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const input = galleryPass.value.trim();
-    if (!input) return;
-    galleryBtn.disabled = true; galleryMsg.textContent = 'Checking…';
-    const ok = matches(input, CONFIG.gallery.password, CONFIG.gallery.caseSensitive);
-    if (ok){
-      remember(STORE_GAL, CONFIG.gallery.rememberHours);
-      unlockGalleryUI();
-    } else {
-      galleryMsg.textContent = 'Incorrect gallery code.';
-      galleryPanel.classList.remove('shake'); void galleryPanel.offsetWidth; galleryPanel.classList.add('shake');
-    }
-    galleryBtn.disabled = false;
-  });
-
-  lockGalleryBtn.addEventListener('click', ()=>{
-    clearRemember(STORE_GAL);
-    lockGalleryUI();
-  });
-
-  lockAllBtn.addEventListener('click', ()=>{
-    clearRemember(STORE_GAL);
-    clearRemember(STORE_PRE);
+  // Stage 1 (preliminary gate)
+  if (hasRemember(STORE_PRE)) {
+    showAppShell();
+  } else {
     showPreGate();
-  });
+  }
+
+  // Stage 2 (gallery veil)
+  if (hasRemember(STORE_GAL)) {
+    unlockGalleryUI();
+  } else {
+    lockGalleryUI();
+  }
+})();
+
+/* Gates */
+preForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const input = prePass.value.trim();
+  if (!input) return;
+  preBtn.disabled = true; preMsg.textContent = 'Checking…';
+  const ok = matches(input, CONFIG.prelim.password, CONFIG.prelim.caseSensitive);
+  if (ok){
+    remember(STORE_PRE, CONFIG.prelim.rememberHours);
+    showAppShell();
+  } else {
+    preMsg.textContent = 'Incorrect preliminary code.';
+    prePanel.classList.remove('shake'); void prePanel.offsetWidth; prePanel.classList.add('shake');
+  }
+  preBtn.disabled = false;
+});
+
+galleryForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const input = galleryPass.value.trim();
+  if (!input) return;
+  galleryBtn.disabled = true; galleryMsg.textContent = 'Checking…';
+  const ok = matches(input, CONFIG.gallery.password, CONFIG.gallery.caseSensitive);
+  if (ok){
+    remember(STORE_GAL, CONFIG.gallery.rememberHours);
+    unlockGalleryUI();
+  } else {
+    galleryMsg.textContent = 'Incorrect gallery code.';
+    galleryPanel.classList.remove('shake'); void galleryPanel.offsetWidth; galleryPanel.classList.add('shake');
+  }
+  galleryBtn.disabled = false;
+});
+
+/* Lock buttons */
+lockGalleryBtn.addEventListener('click', ()=>{
+  clearRemember(STORE_GAL);
+  lockGalleryUI();
+});
+lockAllBtn.addEventListener('click', ()=>{
+  clearRemember(STORE_GAL);
+  clearRemember(STORE_PRE);
+  showPreGate();
+});
 </script>
 
 </body>

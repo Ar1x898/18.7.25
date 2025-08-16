@@ -25,6 +25,8 @@
     .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 9px var(--accent)}
     .btn{background:var(--pink3);color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .btn:hover{background:#ec4899}
+    .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .input{background:#ffe4e1;border:1px solid #f9a8d4;border-radius:999px;padding:10px 12px;outline:none;color:#7a2941;min-width:220px}
     main{max-width:var(--maxw);margin:28px auto;padding:0 20px 40px}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(8,1fr)}}
@@ -47,9 +49,14 @@
     .panel h1{margin:0 0 4px;font-size:20px;letter-spacing:.2px;color:#eafffb}
     .panel p.sub{margin:0 0 14px;color:#8bf0e0;font-size:14px}
     .field{display:flex;gap:10px;align-items:center;background:#071218;border:1px solid #0aaea0;border-radius:12px;padding:10px}
-    input[type="password"]{flex:1;background:transparent;border:none;outline:none;color:#eafffb;font-size:16px;padding:6px 4px}
+    .pw-wrap{position:relative;flex:1;display:flex;align-items:center}
+    input[type="password"], input[type="text"].pw{
+      flex:1;background:transparent;border:none;outline:none;color:#eafffb;font-size:16px;padding:6px 4px
+    }
+    .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:#8bf0e0;cursor:pointer;font-weight:700}
     .unlock{white-space:nowrap;border:1px solid #0aaea0;background:linear-gradient(180deg,#0a2a2f,#091c20);color:#eafffb;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
     .unlock:hover{border-color:#29ffd3}
+    .hint{font-size:12px;color:#f59e0b;margin-top:6px;min-height:1em}
     .msg{min-height:24px;margin-top:10px;color:#ffb3be;font-weight:700}
     @keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
     .shake{animation:shake .35s both}
@@ -72,6 +79,16 @@
     .mini-panel h2{margin:0 0 6px;font-size:18px}
     .mini-panel .field{background:#0b1220;border:1px solid #2a3a52}
     .mini-panel .unlock{border:1px solid #3b82f6;background:linear-gradient(180deg,#102033,#0b1422)}
+
+    /* Lightbox */
+    .lightbox{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.85);z-index:9998}
+    .lightbox.open{display:grid}
+    .lb-img{max-width:90vw;max-height:80vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+    .lb-caption{margin-top:12px;color:#e5e7eb;text-align:center;max-width:80vw}
+    .lb-actions{position:absolute;top:16px;right:16px;display:flex;gap:8px}
+    .icon-btn{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:8px 10px;cursor:pointer}
+    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:999px;padding:10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transition:opacity .18s,transform .18s;z-index:9999}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
   </style>
 </head>
 <body>
@@ -87,9 +104,13 @@
     <p class="sub">If this is for you then you should know the code! What's your name?</p>
     <form id="preForm" autocomplete="off" novalidate>
       <div class="field">
-        <input id="prePass" type="password" inputmode="text" placeholder="Preliminary code" aria-label="Preliminary code" required />
+        <div class="pw-wrap">
+          <input id="prePass" class="pw" type="password" inputmode="text" placeholder="Preliminary code" aria-label="Preliminary code" required />
+          <button class="eye" type="button" data-target="prePass" aria-label="Show or hide password">👁</button>
+        </div>
         <button class="unlock" type="submit" id="preBtn">Enter</button>
       </div>
+      <div id="preHint" class="hint" aria-live="polite"></div>
       <div id="preMsg" class="msg" role="alert" aria-live="polite"></div>
     </form>
   </div>
@@ -99,7 +120,11 @@
 <header class="hidden" id="appHeader">
   <div class="bar">
     <div class="title"><span class="dot" aria-hidden="true"></span> <span id="siteTitle">Locked Gallery</span></div>
-    <div class="actions">
+    <div class="toolbar">
+      <input id="filterInput" class="input" type="text" placeholder="Filter by label…" aria-label="Filter images by label" />
+      <button class="btn" id="shuffleBtn" title="Shuffle">Shuffle</button>
+      <button class="btn" id="openAllBtn" title="Open all notes">Open notes</button>
+      <button class="btn" id="closeAllBtn" title="Close all notes">Close notes</button>
       <button class="btn" id="lockGalleryBtn" title="Lock gallery">Lock Gallery</button>
       <button class="btn" id="lockAllBtn" title="Lock everything">Lock All</button>
     </div>
@@ -117,15 +142,32 @@
         <p class="sub">What's my name? Enter for the memories!</p>
         <form id="galleryForm" autocomplete="off" novalidate>
           <div class="field">
-            <input id="galleryPass" type="password" inputmode="text" placeholder="Gallery code" aria-label="Gallery code" required />
+            <div class="pw-wrap">
+              <input id="galleryPass" class="pw" type="password" inputmode="text" placeholder="Gallery code" aria-label="Gallery code" required />
+              <button class="eye" type="button" data-target="galleryPass" aria-label="Show or hide password">👁</button>
+            </div>
             <button class="unlock" type="submit" id="galleryBtn">Unlock</button>
           </div>
+          <div id="galleryHint" class="hint" aria-live="polite"></div>
           <div id="galleryMsg" class="msg" role="alert" aria-live="polite"></div>
         </form>
       </div>
     </div>
   </section>
 </main>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <div class="lb-actions">
+    <button class="icon-btn" id="lbPrev" aria-label="Previous">⟨</button>
+    <button class="icon-btn" id="lbNext" aria-label="Next">⟩</button>
+    <button class="icon-btn" id="lbClose" aria-label="Close">✕</button>
+  </div>
+  <img id="lbImg" class="lb-img" alt="" />
+  <div id="lbCaption" class="lb-caption"></div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* ================= CONFIG =================
@@ -143,11 +185,13 @@ const CONFIG = {
 
   prelim: {
     password: "francesca",     // preliminary plaintext password
+    // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
     rememberHours: 4,
     caseSensitive: false
   },
   gallery: {
     password: "steven",        // gallery plaintext password
+    // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
     rememberHours: 8,
     caseSensitive: false
   },
@@ -157,10 +201,8 @@ const CONFIG = {
     { src: "curlhair.jpg",   alt: "Curly hair",       label: "Favourite selfie", note: "One of the earlier pics you sent me. I adore the curls! :)" },
     { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We be waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. " },
     { src: "plq.jpg",        alt: "Rooftop vibes",    label: "PLQ roof",         note: "Don't we just love rooftops? They make for the best conversations and late night talks (aside friom vc of course." },
-    { src: "toothless1.jpg", alt: "Specimen 1",       label: "Toothless hat",    note: "Few hours before the fireworks. Wonder what happened that day?" }
+    { src: "toothless1.jpg", alt: "Specimen 1",       label: "Toothless hat",    note: "Few hours before the fireworks. Wonder what happened that day?" },
     { src: "toothless2.jpg", alt: "Specimen 2",       label: "Toothless",        note: "Lorem ipsum de loros." }
-  
-  
   ]
 };
 </script>
@@ -174,23 +216,45 @@ const qs = new URLSearchParams(location.search);
 const DEV_BYPASS = CONFIG.devBypassParam && qs.has(CONFIG.devBypassParam);
 
 function now(){ return Date.now(); }
+
+/* Storage with graceful fallback if localStorage is blocked */
+const StorageBox = (() => {
+  let mem = {};
+  function canUseLS(){
+    try{ localStorage.setItem("_t","1"); localStorage.removeItem("_t"); return true; }catch(_){ return false; }
+  }
+  const useLS = canUseLS();
+  return {
+    set(k,v){ if(useLS) localStorage.setItem(k,v); else mem[k]=v; },
+    get(k){ return useLS ? localStorage.getItem(k) : mem[k] ?? null; },
+    del(k){ if(useLS) localStorage.removeItem(k); else delete mem[k]; }
+  };
+})();
+
 function remember(key, hours){
   try{
     const ttl = Math.max(1, Number(hours)||1);
-    localStorage.setItem(key, JSON.stringify({ exp: now() + ttl*3600*1000 }));
+    StorageBox.set(key, JSON.stringify({ exp: now() + ttl*3600*1000 }));
   }catch(_){}
 }
 function hasRemember(key){
   try{
-    const raw = localStorage.getItem(key);
+    const raw = StorageBox.get(key);
     if(!raw) return false;
     const rec = JSON.parse(raw);
     if(!rec || typeof rec.exp!=='number') return false;
-    if(now()>rec.exp){ localStorage.removeItem(key); return false; }
+    if(now()>rec.exp){ StorageBox.del(key); return false; }
     return true;
   }catch(_){ return false; }
 }
-function clearRemember(key){ try{ localStorage.removeItem(key); }catch(_){ } }
+function clearRemember(key){ try{ StorageBox.del(key); }catch(_){ } }
+
+/* Crypto helpers (optional SHA-256) */
+async function sha256(str){
+  const buf = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
 
 /* =============== DOM refs =============== */
 const preGate     = document.getElementById('preGate');
@@ -199,6 +263,7 @@ const preForm     = document.getElementById('preForm');
 const prePass     = document.getElementById('prePass');
 const preBtn      = document.getElementById('preBtn');
 const preMsg      = document.getElementById('preMsg');
+const preHint     = document.getElementById('preHint');
 
 const appHeader   = document.getElementById('appHeader');
 const app         = document.getElementById('app');
@@ -211,18 +276,40 @@ const galleryForm = document.getElementById('galleryForm');
 const galleryPass = document.getElementById('galleryPass');
 const galleryBtn  = document.getElementById('galleryBtn');
 const galleryMsg  = document.getElementById('galleryMsg');
+const galleryHint = document.getElementById('galleryHint');
 
 const lockGalleryBtn = document.getElementById('lockGalleryBtn');
 const lockAllBtn     = document.getElementById('lockAllBtn');
+const filterInput    = document.getElementById('filterInput');
+const shuffleBtn     = document.getElementById('shuffleBtn');
+const openAllBtn     = document.getElementById('openAllBtn');
+const closeAllBtn    = document.getElementById('closeAllBtn');
+
+const lightbox   = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lbImg');
+const lbCaption  = document.getElementById('lbCaption');
+const lbPrev     = document.getElementById('lbPrev');
+const lbNext     = document.getElementById('lbNext');
+const lbClose    = document.getElementById('lbClose');
+const toastEl    = document.getElementById('toast');
 
 /* =============== Helpers =============== */
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 1500);
+}
 function normalize(input, caseSensitive){
   return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
 }
-function matches(input, target, caseSensitive){
-  return normalize(input, caseSensitive) === normalize(target, caseSensitive);
+async function matchesAsync(input, {password, passwordHash, caseSensitive}){
+  const norm = normalize(input, caseSensitive);
+  if (passwordHash && passwordHash.length === 64) {
+    const hex = await sha256(norm);
+    return hex === passwordHash.toLowerCase();
+  }
+  return norm === normalize(password ?? "", caseSensitive);
 }
-
 function setSiteTitle(){
   document.title = CONFIG.siteTitle || "Locked Gallery";
   if(siteTitleEl) siteTitleEl.textContent = CONFIG.siteTitle || "Locked Gallery";
@@ -244,7 +331,7 @@ function showPreGate(){
   preGate.style.display = 'grid';
   appHeader.classList.add('hidden');
   app.classList.add('hidden');
-  prePass.value = ''; preMsg.textContent = '';
+  prePass.value = ''; preMsg.textContent = ''; preHint.textContent='';
   setTimeout(()=>prePass?.focus(), 0);
 }
 
@@ -255,7 +342,7 @@ function unlockGalleryUI(){
 function lockGalleryUI(){
   gallery.classList.add('gallery-blurred');
   galleryVeil.classList.remove('hidden');
-  galleryPass.value = ''; galleryMsg.textContent = '';
+  galleryPass.value = ''; galleryMsg.textContent = ''; galleryHint.textContent='';
   setTimeout(()=>galleryPass?.focus(), 0);
 }
 
@@ -293,13 +380,14 @@ function el(tag, attrs={}, ...children){
   return node;
 }
 
+let galleryData = [];
 function buildGallery(items){
   gallery.innerHTML = '';
-  const data = Array.isArray(items) && items.length ? items : [{
+  galleryData = (Array.isArray(items) && items.length ? items : [{
     src: PLACEHOLDER_SVG, alt: "Placeholder image", label: "Sample", note: "Edit CONFIG.images in the HTML to add your own images and notes."
-  }];
+  }]).map((it,i)=>({...it, _idx:i}));
 
-  data.forEach((it, i) => {
+  galleryData.forEach((it, i) => {
     const noteId = `note-${i}`;
 
     const img = el('img', {
@@ -317,10 +405,10 @@ function buildGallery(items){
     const controls = el('div', { class: 'controls' }, label, btn);
     const note = el('figcaption', { class: 'note', id: noteId, hidden: true }, el('p', {}, it.note || ''));
 
-    const card = el('figure', { class: 'card', role: 'listitem' }, img, controls, note);
+    const card = el('figure', { class: 'card', role: 'listitem', tabindex:"0" }, img, controls, note);
 
-    function toggleNote(){
-      const willShow = note.hidden;
+    function toggleNote(forceOpen){
+      const willShow = (typeof forceOpen === 'boolean') ? forceOpen : note.hidden;
       note.hidden = !willShow;
       btn.setAttribute('aria-expanded', String(willShow));
       btn.textContent = willShow ? 'Hide note' : 'Show note';
@@ -335,9 +423,38 @@ function buildGallery(items){
       });
     }
 
+    // Lightbox open on double-click or Enter
+    function openLB(){ openLightbox(i); }
+    img.addEventListener('dblclick', openLB);
+    card.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openLB(); });
+
     gallery.appendChild(card);
   });
 }
+
+/* Lightbox logic */
+let lbIndex = 0;
+function openLightbox(idx){
+  lbIndex = (idx + galleryData.length) % galleryData.length;
+  const it = galleryData[lbIndex] || {};
+  lbImg.src = it.src || PLACEHOLDER_SVG;
+  lbImg.alt = it.alt || '';
+  lbCaption.innerHTML = `<strong>${it.label || ''}</strong><br>${it.note || ''}`;
+  lightbox.classList.add('open');
+}
+function closeLightbox(){ lightbox.classList.remove('open'); }
+function nextLB(){ openLightbox(lbIndex+1); }
+function prevLB(){ openLightbox(lbIndex-1); }
+lbClose.addEventListener('click', closeLightbox);
+lbNext.addEventListener('click', nextLB);
+lbPrev.addEventListener('click', prevLB);
+lightbox.addEventListener('click', (e)=>{ if(e.target===lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e)=>{
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key==='Escape') closeLightbox();
+  if(e.key==='ArrowRight') nextLB();
+  if(e.key==='ArrowLeft') prevLB();
+});
 
 /* =============== Init & Event handlers =============== */
 (function init(){
@@ -348,6 +465,7 @@ function buildGallery(items){
   if (DEV_BYPASS){
     showAppShell();
     unlockGalleryUI();
+    toast('DEV bypass active');
     return;
   }
 
@@ -366,16 +484,39 @@ function buildGallery(items){
   }
 })();
 
-/* Gates */
-preForm.addEventListener('submit', (e)=>{
+/* Caps Lock hints */
+function wireCapsHint(inputEl, hintEl){
+  inputEl.addEventListener('keyup', (e)=>{
+    if (!('getModifierState' in e)) return;
+    hintEl.textContent = e.getModifierState('CapsLock') ? 'Caps Lock is ON' : '';
+  });
+}
+wireCapsHint(prePass, preHint);
+wireCapsHint(galleryPass, galleryHint);
+
+/* Show/hide password */
+document.querySelectorAll('.eye').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-target');
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type === 'password'){ el.type = 'text'; btn.textContent='🙈'; }
+    else { el.type = 'password'; btn.textContent='👁'; }
+    el.focus();
+  });
+});
+
+/* Gates (async to support optional hashing) */
+preForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const input = prePass.value.trim();
-  if (!input) return;
+  if (!input){ preMsg.textContent='Please enter a code.'; return; }
   preBtn.disabled = true; preMsg.textContent = 'Checking…';
-  const ok = matches(input, CONFIG.prelim.password, CONFIG.prelim.caseSensitive);
+  const ok = await matchesAsync(input, CONFIG.prelim);
   if (ok){
     remember(STORE_PRE, CONFIG.prelim.rememberHours);
     showAppShell();
+    toast('Preliminary gate unlocked');
   } else {
     preMsg.textContent = 'Incorrect preliminary code.';
     prePanel.classList.remove('shake'); void prePanel.offsetWidth; prePanel.classList.add('shake');
@@ -383,15 +524,16 @@ preForm.addEventListener('submit', (e)=>{
   preBtn.disabled = false;
 });
 
-galleryForm.addEventListener('submit', (e)=>{
+galleryForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const input = galleryPass.value.trim();
-  if (!input) return;
+  if (!input){ galleryMsg.textContent='Please enter a code.'; return; }
   galleryBtn.disabled = true; galleryMsg.textContent = 'Checking…';
-  const ok = matches(input, CONFIG.gallery.password, CONFIG.gallery.caseSensitive);
+  const ok = await matchesAsync(input, CONFIG.gallery);
   if (ok){
     remember(STORE_GAL, CONFIG.gallery.rememberHours);
     unlockGalleryUI();
+    toast('Gallery unlocked');
   } else {
     galleryMsg.textContent = 'Incorrect gallery code.';
     galleryPanel.classList.remove('shake'); void galleryPanel.offsetWidth; galleryPanel.classList.add('shake');
@@ -403,11 +545,46 @@ galleryForm.addEventListener('submit', (e)=>{
 lockGalleryBtn.addEventListener('click', ()=>{
   clearRemember(STORE_GAL);
   lockGalleryUI();
+  toast('Gallery locked');
 });
 lockAllBtn.addEventListener('click', ()=>{
   clearRemember(STORE_GAL);
   clearRemember(STORE_PRE);
   showPreGate();
+  toast('Everything locked');
+});
+
+/* Filter / Shuffle / Open-Close notes */
+filterInput.addEventListener('input', ()=>{
+  const q = filterInput.value.trim().toLowerCase();
+  [...gallery.children].forEach((card, i)=>{
+    const label = (galleryData[i]?.label || '').toLowerCase();
+    card.style.display = (!q || label.includes(q)) ? '' : 'none';
+  });
+});
+shuffleBtn.addEventListener('click', ()=>{
+  for(let i=galleryData.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [galleryData[i], galleryData[j]] = [galleryData[j], galleryData[i]];
+  }
+  // rebuild DOM in shuffled order
+  buildGallery(galleryData);
+  filterInput.dispatchEvent(new Event('input'));
+});
+openAllBtn.addEventListener('click', ()=>{
+  [...gallery.querySelectorAll('.note')].forEach(n=>n.hidden=false);
+  [...gallery.querySelectorAll('.note-toggle')].forEach(b=>{ b.textContent='Hide note'; b.setAttribute('aria-expanded','true'); });
+});
+closeAllBtn.addEventListener('click', ()=>{
+  [...gallery.querySelectorAll('.note')].forEach(n=>n.hidden=true);
+  [...gallery.querySelectorAll('.note-toggle')].forEach(b=>{ b.textContent='Show note'; b.setAttribute('aria-expanded','false'); });
+});
+
+/* Accessibility niceties */
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='/' && document.activeElement.tagName!=='INPUT'){
+    e.preventDefault(); filterInput.focus();
+  }
 });
 </script>
 

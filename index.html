@@ -183,6 +183,9 @@ const CONFIG = {
   /* DEV bypass: append ?dev=1 to the URL to preview unlocked UI without codes */
   devBypassParam: "dev",
 
+  /* NEW: If false, the gallery unlocks right after the preliminary code. */
+  twoStep: false,  // set to true if you want two separate passwords
+
   prelim: {
     password: "francesca",     // preliminary plaintext password
     // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
@@ -190,14 +193,14 @@ const CONFIG = {
     caseSensitive: false
   },
   gallery: {
-    password: "steven",        // gallery plaintext password
+    password: "steven",        // gallery plaintext password (used only when twoStep: true)
     // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
     rememberHours: 8,
     caseSensitive: false
   },
 
   images: [
-    // === Add images here ===
+    /* === Your images & notes (left untouched) === */
     { src: "curlhair.jpg",   alt: "Curly hair",       label: "Favourite selfie", note: "One of the earlier pics you sent me. I adore the curls! :)" },
     { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We be waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. " },
     { src: "plq.jpg",        alt: "Rooftop vibes",    label: "PLQ roof",         note: "Don't we just love rooftops? They make for the best conversations and late night talks (aside friom vc of course." },
@@ -256,6 +259,18 @@ async function sha256(str){
   return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 
+function normalize(input, caseSensitive){
+  return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
+}
+async function matchesAsync(input, {password, passwordHash, caseSensitive}){
+  const norm = normalize(input, caseSensitive);
+  if (passwordHash && passwordHash.length === 64) {
+    const hex = await sha256(norm);
+    return hex === passwordHash.toLowerCase();
+  }
+  return norm === normalize(password ?? "", caseSensitive);
+}
+
 /* =============== DOM refs =============== */
 const preGate     = document.getElementById('preGate');
 const prePanel    = document.getElementById('preGatePanel');
@@ -299,17 +314,6 @@ function toast(msg){
   toastEl.classList.add('show');
   setTimeout(()=>toastEl.classList.remove('show'), 1500);
 }
-function normalize(input, caseSensitive){
-  return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
-}
-async function matchesAsync(input, {password, passwordHash, caseSensitive}){
-  const norm = normalize(input, caseSensitive);
-  if (passwordHash && passwordHash.length === 64) {
-    const hex = await sha256(norm);
-    return hex === passwordHash.toLowerCase();
-  }
-  return norm === normalize(password ?? "", caseSensitive);
-}
 function setSiteTitle(){
   document.title = CONFIG.siteTitle || "Locked Gallery";
   if(siteTitleEl) siteTitleEl.textContent = CONFIG.siteTitle || "Locked Gallery";
@@ -334,7 +338,6 @@ function showPreGate(){
   prePass.value = ''; preMsg.textContent = ''; preHint.textContent='';
   setTimeout(()=>prePass?.focus(), 0);
 }
-
 function unlockGalleryUI(){
   gallery.classList.remove('gallery-blurred');
   galleryVeil.classList.add('hidden');
@@ -350,11 +353,9 @@ function lockGalleryUI(){
 const PLACEHOLDER_SVG =
   'data:image/svg+xml;utf8,' + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#0b1020"/>
-        </linearGradient>
-      </defs>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#0b1020"/>
+      </linearGradient></defs>
       <rect width="100%" height="100%" fill="url(#g)"/>
       <g fill="#93c5fd" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" text-anchor="middle">
         <text x="50%" y="48%" font-size="36">Add your image at</text>
@@ -389,14 +390,7 @@ function buildGallery(items){
 
   galleryData.forEach((it, i) => {
     const noteId = `note-${i}`;
-
-    const img = el('img', {
-      alt: it.alt || "",
-      loading: 'lazy',
-      decoding: 'async'
-    });
-
-    // Load with graceful fallback to avoid 404s
+    const img = el('img', { alt: it.alt || "", loading: 'lazy', decoding: 'async' });
     img.src = it.src || PLACEHOLDER_SVG;
     img.addEventListener('error', () => { img.src = PLACEHOLDER_SVG; });
 
@@ -415,13 +409,11 @@ function buildGallery(items){
     }
     btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); toggleNote(); });
 
-    if (CONFIG.clickAnywhereToToggle) {
-      img.style.cursor = 'pointer';
-      card.addEventListener('click', (ev) => {
-        if (ev.target === btn) return;
-        toggleNote();
-      });
-    }
+    img.style.cursor = 'pointer';
+    card.addEventListener('click', (ev) => {
+      if (ev.target === btn) return;
+      toggleNote();
+    });
 
     // Lightbox open on double-click or Enter
     function openLB(){ openLightbox(i); }
@@ -477,14 +469,16 @@ document.addEventListener('keydown', (e)=>{
   }
 
   // Stage 2 (gallery veil)
-  if (hasRemember(STORE_GAL)) {
-    unlockGalleryUI();
+  if (CONFIG.twoStep){
+    if (hasRemember(STORE_GAL)) unlockGalleryUI();
+    else lockGalleryUI();
   } else {
-    lockGalleryUI();
+    // One-step mode always unlocks gallery
+    unlockGalleryUI();
   }
 })();
 
-/* Caps Lock hints */
+/* Caps Lock hints & show/hide buttons */
 function wireCapsHint(inputEl, hintEl){
   inputEl.addEventListener('keyup', (e)=>{
     if (!('getModifierState' in e)) return;
@@ -494,7 +488,6 @@ function wireCapsHint(inputEl, hintEl){
 wireCapsHint(prePass, preHint);
 wireCapsHint(galleryPass, galleryHint);
 
-/* Show/hide password */
 document.querySelectorAll('.eye').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const id = btn.getAttribute('data-target');
@@ -506,50 +499,74 @@ document.querySelectorAll('.eye').forEach(btn=>{
   });
 });
 
-/* Gates (async to support optional hashing) */
+/* Crypto-based matcher */
+async function matchesAsync(input, rules){
+  const norm = rules.caseSensitive ? String(input||"") : String(input||"").toLowerCase();
+  if (rules.passwordHash && rules.passwordHash.length === 64) {
+    const hex = await sha256(norm);
+    return hex === rules.passwordHash.toLowerCase();
+  }
+  return norm === (rules.caseSensitive ? String(rules.password||"") : String(rules.password||"").toLowerCase());
+}
+
+/* Gates (async) */
 preForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const input = prePass.value.trim();
   if (!input){ preMsg.textContent='Please enter a code.'; return; }
   preBtn.disabled = true; preMsg.textContent = 'Checking…';
-  const ok = await matchesAsync(input, CONFIG.prelim);
-  if (ok){
-    remember(STORE_PRE, CONFIG.prelim.rememberHours);
-    showAppShell();
-    toast('Preliminary gate unlocked');
-  } else {
-    preMsg.textContent = 'Incorrect preliminary code.';
-    prePanel.classList.remove('shake'); void prePanel.offsetWidth; prePanel.classList.add('shake');
+  try{
+    const ok = await matchesAsync(input, CONFIG.prelim);
+    if (ok){
+      remember(STORE_PRE, CONFIG.prelim.rememberHours);
+      showAppShell();
+      toast('Preliminary gate unlocked');
+
+      if (!CONFIG.twoStep){
+        // Auto-unlock gallery in one-step mode
+        remember(STORE_GAL, CONFIG.gallery.rememberHours);
+        unlockGalleryUI();
+      }
+    } else {
+      preMsg.textContent = 'Incorrect preliminary code.';
+      prePanel.classList.remove('shake'); void prePanel.offsetWidth; prePanel.classList.add('shake');
+    }
+  } finally {
+    preBtn.disabled = false;
   }
-  preBtn.disabled = false;
 });
 
 galleryForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
+  if (!CONFIG.twoStep){ galleryMsg.textContent = 'Two-step is off.'; return; }
   const input = galleryPass.value.trim();
   if (!input){ galleryMsg.textContent='Please enter a code.'; return; }
   galleryBtn.disabled = true; galleryMsg.textContent = 'Checking…';
-  const ok = await matchesAsync(input, CONFIG.gallery);
-  if (ok){
-    remember(STORE_GAL, CONFIG.gallery.rememberHours);
-    unlockGalleryUI();
-    toast('Gallery unlocked');
-  } else {
-    galleryMsg.textContent = 'Incorrect gallery code.';
-    galleryPanel.classList.remove('shake'); void galleryPanel.offsetWidth; galleryPanel.classList.add('shake');
+  try{
+    const ok = await matchesAsync(input, CONFIG.gallery);
+    if (ok){
+      remember(STORE_GAL, CONFIG.gallery.rememberHours);
+      unlockGalleryUI();
+      toast('Gallery unlocked');
+    } else {
+      galleryMsg.textContent = 'Incorrect gallery code.';
+      galleryPanel.classList.remove('shake'); void galleryPanel.offsetWidth; galleryPanel.classList.add('shake');
+    }
+  } finally {
+    galleryBtn.disabled = false;
   }
-  galleryBtn.disabled = false;
 });
 
 /* Lock buttons */
 lockGalleryBtn.addEventListener('click', ()=>{
   clearRemember(STORE_GAL);
-  lockGalleryUI();
-  toast('Gallery locked');
+  if (CONFIG.twoStep) lockGalleryUI(); else unlockGalleryUI(); // keep visible in one-step mode
+  toast('Gallery lock cleared');
 });
 lockAllBtn.addEventListener('click', ()=>{
   clearRemember(STORE_GAL);
   clearRemember(STORE_PRE);
+  if (CONFIG.twoStep) lockGalleryUI();
   showPreGate();
   toast('Everything locked');
 });
@@ -567,7 +584,6 @@ shuffleBtn.addEventListener('click', ()=>{
     const j = Math.floor(Math.random()*(i+1));
     [galleryData[i], galleryData[j]] = [galleryData[j], galleryData[i]];
   }
-  // rebuild DOM in shuffled order
   buildGallery(galleryData);
   filterInput.dispatchEvent(new Event('input'));
 });
@@ -580,7 +596,7 @@ closeAllBtn.addEventListener('click', ()=>{
   [...gallery.querySelectorAll('.note-toggle')].forEach(b=>{ b.textContent='Show note'; b.setAttribute('aria-expanded','false'); });
 });
 
-/* Accessibility niceties */
+/* Quick keyboard focus */
 window.addEventListener('keydown', (e)=>{
   if(e.key==='/' && document.activeElement.tagName!=='INPUT'){
     e.preventDefault(); filterInput.focus();

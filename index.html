@@ -62,7 +62,7 @@
     .shake{animation:shake .35s both}
     noscript{display:block;max-width:740px;margin:40px auto;padding:16px;border:1px solid #b91c1c;border-radius:12px;background:#7f1d1d;color:#fee2e2;font-weight:600}
 
-    /* Gallery veil (stage 2) */
+    /* Gallery veil (main) */
     .gallery-wrap{position:relative}
     .gallery-veil{
       position:absolute; inset:0; display:grid; place-items:center;
@@ -97,7 +97,7 @@
   This site needs JavaScript to run. Enable JS to enter your access codes and continue.
 </noscript>
 
-<!-- ===== STAGE 1: PRELIM GATE (full screen) ===== -->
+<!-- ===== STAGE 1: PRELIM GATE ===== -->
 <div id="preGate" class="gate" aria-labelledby="preGateTitle">
   <div class="panel" id="preGatePanel">
     <h1 id="preGateTitle">Security Check</h1>
@@ -116,7 +116,7 @@
   </div>
 </div>
 
-<!-- ===== APP (visible after Stage 1) ===== -->
+<!-- ===== MAIN PAGE ===== -->
 <header class="hidden" id="appHeader">
   <div class="bar">
     <div class="title"><span class="dot" aria-hidden="true"></span> <span id="siteTitle">Locked Gallery</span></div>
@@ -135,7 +135,7 @@
   <section aria-label="Image notes gallery" class="gallery-wrap">
     <div id="gallery" class="grid gallery-blurred" role="list"></div>
 
-    <!-- ===== STAGE 2: GALLERY VEIL ===== -->
+    <!-- ===== GALLERY VEIL ===== -->
     <div id="galleryVeil" class="gallery-veil" aria-labelledby="galleryTitle">
       <div class="mini-panel" id="galleryPanel">
         <h2 id="galleryTitle">Unlock Memory Gallery</h2>
@@ -170,18 +170,15 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
-/* ================= CONFIG =================
-   Put your images in the same folder (or adjust paths).
-   Example below adds "test.jpg" to the gallery. */
+/* ================= CONFIG ================= */
+
 const CONFIG = {
   siteTitle: "1 Month Anniversary",
   clickAnywhereToToggle: true,
 
-  /* Optional: set a local background image (instead of a remote URL) */
-  backgroundImage: "1month.jpg", // put a local file here or set to "" to use solid color
+  backgroundImage: "1month.jpg", 
 
-  /* If false, the gallery unlocks right after the preliminary code. */
-  twoStep: false,  // set to true if you want two separate passwords
+  twoStep: false,  
 
   prelim: {
     password: "francesca",    
@@ -204,8 +201,9 @@ const CONFIG = {
     { src: "stadium.jpg",    alt: "Stadium",          label: "Khatib Stadium",                   note: "Take more pics, though try a small grin. Better than a large smile anyday... " },
     { src: "bowling.jpg",    alt: "Bowling",          label: "First Bowling",                    note: "Still a commune if my memory serves me right, but doesn't 'commune' sound like such an elegant word though? Chose a nice frame, looks like you got a strike right? This marks the beginning of your withcraftery." },
     { src: "tictactoe.jpg",  alt: "TicTacToe",        label: "Early morning entertainment",      note: "Now this is what you call unforgettable, congrats on putting that forehead to good use! Does remind me of our late night to early morning poker runs..." },
-    { src: "icebucket.jpg",  alt: "Ice Bucket",       label: "Ice bucket challenge",             note: "The umbrella was a good joke. So was my unfortunate Hitler hairdo. Wasn't this not long after Ori?" },
-    { src: "hairbun.jpg",    alt: "Hair",             label: "Hair bun",                         note: "Whatever it takes to get those curls. Respect. Actually purple isn't such a bad colour either." }
+    { src: "icebucket.jpg",  alt: "Ice Bucket",       label: "Ice bucket challenge",             note: "The umbrella was a good joke. So was my unfortunate Hitler hairdo. Wasn't this not long after Ori? Could you have envisioned this after orientation?" },
+    { src: "hairbun.jpg",    alt: "Hair",             label: "Hair bun",                         note: "Whatever it takes to get those curls. Respect. Actually purple isn't such a bad colour either." },
+    { src: "specs.jpg",      alt: "Specs",            label: "Wearing my specs",                 note: "Do you look like me with my specs? I don't get what's so horrible about your specs, but it definetely does not deserve so much fuss. If you do go looking for new specs, let me know so you can get a good pair. When is it time to transition from a minion?" }
   ]
 };
 </script>

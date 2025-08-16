@@ -180,32 +180,28 @@ const CONFIG = {
   /* Optional: set a local background image (instead of a remote URL) */
   backgroundImage: "1month.jpg", // put a local file here or set to "" to use solid color
 
-  /* DEV bypass: append ?dev=1 to the URL to preview unlocked UI without codes */
-  devBypassParam: "dev",
-
   /* NEW: If false, the gallery unlocks right after the preliminary code. */
-  twoStep: false,  // set to true if you want two separate passwords
+  twoStep: true,  // set to true if you want two separate passwords
 
   prelim: {
-    password: "francesca",     // preliminary plaintext password
-    // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
+    password: "francesca",    
     rememberHours: 4,
     caseSensitive: false
   },
   gallery: {
-    password: "steven",        // gallery plaintext password (used only when twoStep: true)
-    // passwordHash: "",       // optional SHA-256 hex of the normalized password (if set, used instead of plaintext)
+    password: "steven",        
     rememberHours: 8,
     caseSensitive: false
   },
 
   images: [
-    /* === Your images & notes (left untouched) === */
     { src: "curlhair.jpg",   alt: "Curly hair",       label: "Favourite selfie", note: "One of the earlier pics you sent me. I adore the curls! :)" },
-    { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We be waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. " },
-    { src: "plq.jpg",        alt: "Rooftop vibes",    label: "PLQ roof",         note: "Don't we just love rooftops? They make for the best conversations and late night talks (aside friom vc of course." },
+    { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We were waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. Always nice to eat together, and it's cute how you always wanna sit side by side insead of opposite each other haha." },
+    { src: "plq.jpg",        alt: "Rooftop vibes",    label: "PLQ roof",         note: "Don't we just love rooftops? They make for the best conversations and late night talks (aside from vc of course)." },
     { src: "toothless1.jpg", alt: "Specimen 1",       label: "Toothless hat",    note: "Few hours before the fireworks. Wonder what happened that day?" },
-    { src: "toothless2.jpg", alt: "Specimen 2",       label: "Toothless",        note: "Lorem ipsum de loros." }
+    { src: "toothless2.jpg", alt: "Specimen 2",       label: "Toothless",        note: "You fit here better than me! I'll get you something related to Toothless soon, psst." },
+    { src: "reservoir.jpg",  alt: "Lady of the lake", label: "Yishun Lake",      note: "Waiting to cross the road, 2 views in 1. Look how good at pool you've become, might as well be better than me now." }
+    { src: "stadium.jpg",    alt: "Stadium",       label: "Stadium selfie",      note: "You should take more photos. A small genuine smile beats a large grin any day..." }
   ]
 };
 </script>

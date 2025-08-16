@@ -180,7 +180,7 @@ const CONFIG = {
   /* Optional: set a local background image (instead of a remote URL) */
   backgroundImage: "1month.jpg", // put a local file here or set to "" to use solid color
 
-  /* NEW: If false, the gallery unlocks right after the preliminary code. */
+  /* If false, the gallery unlocks right after the preliminary code. */
   twoStep: false,  // set to true if you want two separate passwords
 
   prelim: {
@@ -196,7 +196,7 @@ const CONFIG = {
 
   images: [
     { src: "curlhair.jpg",   alt: "Curly hair",       label: "Favourite selfie", note: "One of the earlier pics you sent me. I adore the curls! :)" },
-    { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We were waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. Always nice to eat together, and it's cute how you always wanna sit side by side insead of opposite each other haha." },
+    { src: "theft.jpg",      alt: "Theft is a crime", label: "Mirror pic",       note: "We were waiting for that Yakiniku Like ticket, got a free 100g Karubi set and made sure to get 300g rice. Always nice to eat together, and it's cute how you always wanna sit side by side instead of opposite each other haha." },
     { src: "plq.jpg",        alt: "Rooftop vibes",    label: "PLQ roof",         note: "Don't we just love rooftops? They make for the best conversations and late night talks (aside from vc of course)." },
     { src: "toothless1.jpg", alt: "Specimen 1",       label: "Toothless hat",    note: "Few hours before the fireworks. Wonder what happened that day?" },
     { src: "toothless2.jpg", alt: "Specimen 2",       label: "Toothless",        note: "You fit here better than me! I'll get you something related to Toothless soon, psst." },
@@ -211,7 +211,8 @@ const STORE_PRE  = "auth.prelim.v1";
 const STORE_GAL  = "auth.gallery.v1";
 
 const qs = new URLSearchParams(location.search);
-const DEV_BYPASS = CONFIG.devBypassParam && qs.has(CONFIG.devBypassParam);
+/* Avoid calling URLSearchParams.has with undefined */
+const DEV_BYPASS = (typeof CONFIG.devBypassParam === 'string') && qs.has(CONFIG.devBypassParam);
 
 function now(){ return Date.now(); }
 
@@ -256,14 +257,6 @@ async function sha256(str){
 
 function normalize(input, caseSensitive){
   return caseSensitive ? String(input||"") : String(input||"").toLowerCase();
-}
-async function matchesAsync(input, {password, passwordHash, caseSensitive}){
-  const norm = normalize(input, caseSensitive);
-  if (passwordHash && passwordHash.length === 64) {
-    const hex = await sha256(norm);
-    return hex === passwordHash.toLowerCase();
-  }
-  return norm === normalize(password ?? "", caseSensitive);
 }
 
 /* =============== DOM refs =============== */
@@ -494,7 +487,9 @@ document.querySelectorAll('.eye').forEach(btn=>{
   });
 });
 
-/* Crypto-based matcher */
+/* Crypto-based matcher
+   NOTE: The original file had two matchesAsync() declarations.
+   Keeping ONE resolves a Safari/Chrome strict duplicate binding error that stopped the login from running. */
 async function matchesAsync(input, rules){
   const norm = rules.caseSensitive ? String(input||"") : String(input||"").toLowerCase();
   if (rules.passwordHash && rules.passwordHash.length === 64) {
@@ -518,7 +513,7 @@ preForm.addEventListener('submit', async (e)=>{
       toast('Preliminary gate unlocked');
 
       if (!CONFIG.twoStep){
-        // Auto-unlock gallery in one-step mode
+        // Auto-unlock gallery in one-step mode (show "main page")
         remember(STORE_GAL, CONFIG.gallery.rememberHours);
         unlockGalleryUI();
       }
